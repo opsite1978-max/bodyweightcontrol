@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>晨禾 × 診所 | 體重管理計畫</title>
+    <style>
+        :root {
+            --primary-color: #2c5f2d; /* 晨禾綠 */
+            --accent-color: #97bc62;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #334155;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 封面設計 */
+        .header {
+            background: linear-gradient(135deg, #2c5f2d 0%, #1a4a1b 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            margin-top: 10px;
+            opacity: 0.9;
+            font-size: 0.95rem;
+            font-weight: 300;
+        }
+
+        .logo-circle {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        /* 表單區域 */
+        .content {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background-color: #f8fafc;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: #fff;
+        }
+
+        .btn-calc {
+            width: 100%;
+            background-color: #1e293b;
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: transform 0.1s;
+        }
+
+        .btn-calc:active {
+            transform: scale(0.98);
+        }
+
+        /* 結果顯示 */
+        #resultSection {
+            display: none;
+            background-color: #f0fdf4;
+            margin: 0 2rem 2rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid #dcfce7;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .big-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+
+        .unit {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .warning {
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* 食譜卡片 */
+        .menu-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .menu-title {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .menu-kcal {
+            font-size: 0.85rem;
+            background: #eee;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .menu-items {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .food-emoji {
+            margin-right: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="logo-circle">🌿</div>
+            <h1>晨禾 × 診所</h1>
+            <p>專業體重管理與營養規劃</p>
+        </div>
+
+        <div class="content">
+            <div class="form-group">
+                <label>性別</label>
+                <select id="sex">
+                    <option value="male">男性</option>
+                    <option value="female">女性</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1">
+                    <label>年齡</label>
+                    <input type="number" id="age" value="30">
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>身高 (cm)</label>
+                    <input type="number" id="height" value="170">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>體重 (kg)</label>
+                <input type="number" id="weight" value="70">
+            </div>
+
+            <div class="form-group">
+                <label>日常活動量</label>
+                <select id="activity">
+                    <option value="1.2">久坐 (辦公室工作)</option>
+                    <option value="1.375">輕度 (每週運動1-3天)</option>
+                    <option value="1.55">中度 (每週運動3-5天)</option>
+                    <option value="1.725">高度 (勞力工作/頻繁運動)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>每日減重目標 (熱量赤字)</label>
+                <select id="goal">
+                    <option value="300">保守 (-300 kcal)</option>
+                    <option value="500" selected>標準 (-500 kcal)</option>
+                    <option value="700">積極 (-700 kcal)</option>
+                </select>
+            </div>
+
+            <button class="btn-calc" onclick="calculate()">計算專屬建議</button>
+        </div>
+
+        <div id="resultSection">
+            <div class="result-title">建議每日攝取</div>
+            <div class="big-number" id="targetDisplay">0 <span class="unit">kcal</span></div>
+            <div id="warningMsg" class="warning"></div>
+
+            <div style="margin: 1.5rem 0; border-top: 1px dashed #cbd5e1;"></div>
+
+            <div class="result-title" style="font-size: 1rem; margin-bottom: 0;">🥗 晨禾營養師推薦食譜</div>
+            
+            <div class="menu-card">
+                <div class="menu-header">
+                    <span class="menu-title">早餐 Breakfast</span>
+                    <span class="menu-kcal" id="kcalBreakfast">0 kcal</span>
+                </div>
+                <div class="menu-items" id="menuBreakfast">
+                    載入中...
+                </div>
+            </div>
+
+            <div class="menu-card">
+                <div class="menu-header">
+                    <span class="menu-title">午餐 Lunch</span>
+                    <span class="menu-kcal" id="kcalLunch">0 kcal</span>
+                </div>
+                <div class="menu-items" id="menuLunch">
+                    載入中...
+                </div>
+            </div>
+
+            <div class="menu-card">
+                <div class="menu-header">
+                    <span class="menu-title">晚餐 Dinner</span>
+                    <span class="menu-kcal" id="kcalDinner">0 kcal</span>
+                </div>
+                <div class="menu-items" id="menuDinner">
+                    載入中...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 食譜資料庫 (簡單範例)
+        const recipes = {
+            low: {
+                breakfast: "🥣 無糖豆漿(200ml) + 水煮蛋(1顆) + 半個地瓜",
+                lunch: "🥗 雞胸肉沙拉(和風醬) + 五穀飯(半碗) + 燙青菜",
+                dinner: "🐟 蒸魚片/鯛魚 + 豆腐湯 + 少量水果"
+            },
+            medium: {
+                breakfast: "🥪 全麥鮪魚三明治 + 黑咖啡/無糖茶 + 蘋果一顆",
+                lunch: "🍱 滷雞腿(去皮) + 糙米飯(1碗) + 兩種蔬菜 + 蛋一顆",
+                dinner: "🍲 瘦肉片蔬菜鍋 (不喝湯) + 冬粉(半把)"
+            },
+            high: {
+                breakfast: "🥯 貝果 + 煎蛋 + 希臘優格 + 堅果一小把",
+                lunch: "🥩 煎牛排/豬排(掌心大) + 馬鈴薯泥 + 大份沙拉",
+                dinner: "🍛 雞肉咖哩(少醬) + 藜麥飯 + 炒時蔬"
+            }
+        };
+
+        function calculate() {
+            // 1. 獲取數值
+            const sex = document.getElementById('sex').value;
+            const age = parseFloat(document.getElementById('age').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const activity = parseFloat(document.getElementById('activity').value);
+            const goal = parseFloat(document.getElementById('goal').value);
+
+            // 2. 計算 BMR (Mifflin-St Jeor 公式)
+            let bmr;
+            if (sex === 'male') {
+                bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+            } else {
+                bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+            }
+
+            // 3. 計算 TDEE 與 目標
+            const tdee = bmr * activity;
+            const target = Math.round(tdee - goal);
+
+            // 4. 安全檢查
+            const warningEl = document.getElementById('warningMsg');
+            if (target < bmr) {
+                warningEl.textContent = "⚠️ 注意：此熱量低於基礎代謝，建議諮詢醫師";
+            } else {
+                warningEl.textContent = "";
+            }
+
+            // 5. 分配三餐熱量 (30% - 40% - 30%)
+            const kBreakfast = Math.round(target * 0.3);
+            const kLunch = Math.round(target * 0.4);
+            const kDinner = Math.round(target * 0.3);
+
+            // 6. 選擇食譜等級
+            let menuLevel = 'medium';
+            if (target < 1400) menuLevel = 'low';
+            if (target > 1900) menuLevel = 'high';
+
+            // 7. 更新畫面
+            document.getElementById('targetDisplay').innerHTML = `${target} <span class="unit">kcal</span>`;
+            
+            document.getElementById('kcalBreakfast').textContent = `約 ${kBreakfast} kcal`;
+            document.getElementById('menuBreakfast').textContent = recipes[menuLevel].breakfast;
+
+            document.getElementById('kcalLunch').textContent = `約 ${kLunch} kcal`;
+            document.getElementById('menuLunch').textContent = recipes[menuLevel].lunch;
+
+            document.getElementById('kcalDinner').textContent = `約 ${kDinner} kcal`;
+            document.getElementById('menuDinner').textContent = recipes[menuLevel].dinner;
+
+            // 顯示結果區塊
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // 自動捲動到結果
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
