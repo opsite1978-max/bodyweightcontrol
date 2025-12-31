@@ -16,7 +16,7 @@
             --predict-border: #bae6fd;
             --health-bg: #f3e8ff;
             --health-border: #d8b4fe;
-            --badge-bg: #ecfccb; /* 份量標籤底色 */
+            --badge-bg: #ecfccb;
             --badge-text: #3f6212;
         }
 
@@ -229,35 +229,15 @@
             border-radius: 12px;
         }
 
-        .safety-alert {
-            background-color: #fff1f2;
-            border: 1px solid #fda4af;
-            color: #be123c;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            text-align: left;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            display: none;
-        }
-        .safety-alert strong {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 1rem;
-            color: #9f1239;
-        }
-
-        /* 食譜卡片 (圖示版樣式) */
+        /* 食譜卡片 */
         .menu-card {
             background: #fcfcfc;
             border-radius: 12px;
             padding: 1rem;
             margin-top: 1rem;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 4px solid var(--accent-color);
             border: 1px solid #eee;
-            border-left-width: 4px;
+            border-left: 4px solid var(--accent-color);
         }
 
         .menu-header {
@@ -281,7 +261,6 @@
             border-radius: 10px;
         }
 
-        /* 新增：食物清單樣式 */
         .food-list {
             display: flex;
             flex-direction: column;
@@ -459,9 +438,9 @@
             <div id="weightLossOptions">
                 <label style="margin-bottom:10px;">📉 請選擇您希望的減重速度：</label>
                 <select id="goal">
-                    <option value="300">溫和 (每週約瘦 0.3 kg)</option>
-                    <option value="500" selected>標準 (每週約瘦 0.5 kg)</option>
-                    <option value="770">積極 (每週約瘦 0.8 kg)</option>
+                    <option value="300">溫和 (每日減 300 kcal)</option>
+                    <option value="500" selected>標準 (每日減 500 kcal)</option>
+                    <option value="770">積極 (每日減 770 kcal)</option>
                 </select>
             </div>
 
@@ -475,8 +454,6 @@
             
             <div class="result-title" id="dietTitle">建議每日攝取</div>
             <div class="big-number" id="targetDisplay">0 <span class="unit">kcal</span></div>
-
-            <div id="safetyAlert" class="safety-alert"></div>
 
             <div id="predictionBox" class="prediction-card">
                 <div class="predict-row">
@@ -524,7 +501,7 @@
             </div>
             
             <div style="text-align:center; font-size:0.8rem; color:#999; margin-top:20px;">
-                * 請保持每天飲水 2000cc 以上以幫助代謝
+                * 建議熱量已確保高於基礎代謝，請安心執行。
             </div>
         </div>
     </div>
@@ -553,7 +530,6 @@
             helper.style.display = 'block';
         }
 
-        // --- 食譜資料庫 (圖示 + 標籤結構) ---
         const recipes = {
             low: {
                 breakfast: `
@@ -746,42 +722,35 @@
 
         function generateMenu() {
             let targetCalories = 0;
-            let goalBurn = 0;
-            const safetyAlertEl = document.getElementById('safetyAlert');
-            safetyAlertEl.style.display = 'none';
+            let realDeficit = 0; // 實際的熱量缺口
 
             if (isNeedDiet) {
-                goalBurn = parseFloat(document.getElementById('goal').value);
-                targetCalories = globalTDEE - goalBurn;
+                // 1. 取得使用者希望的熱量缺口 (300 / 500 / 770)
+                let selectedDeficit = parseFloat(document.getElementById('goal').value);
+                
+                // 2. 核心防呆邏輯：計算目標熱量
+                // 取 (TDEE - 缺口) 與 (BMR) 中的「最大值」
+                // 這保證了：即使使用者選了激進減重，結果也絕對不會低於 BMR
+                targetCalories = Math.max(globalBMR, globalTDEE - selectedDeficit);
+                
+                // 3. 反推「實際」熱量缺口 (用於準確計算預計體重)
+                // 如果被 BMR 卡住，實際缺口會小於原本選的 (例如本來想減 770，但卡在 BMR 後實際只減 400)
+                realDeficit = globalTDEE - targetCalories;
                 
                 document.getElementById('predictionBox').style.display = 'flex';
                 document.getElementById('dietTitle').textContent = "建議減重攝取熱量";
 
-                const weeklyLossKg = (goalBurn * 7) / 7700;
-                const monthlyLossKg = (goalBurn * 30) / 7700;
+                // 4. 計算預測值 (使用實際缺口)
+                const weeklyLossKg = (realDeficit * 7) / 7700;
+                const monthlyLossKg = (realDeficit * 30) / 7700;
                 const futureWeight = globalWeight - monthlyLossKg;
                 
                 document.getElementById('weeklyLoss').textContent = "-" + weeklyLossKg.toFixed(1);
                 document.getElementById('monthlyLoss').textContent = "-" + monthlyLossKg.toFixed(1);
                 document.getElementById('finalWeightNote').innerHTML = 
-                    `💡 照這速度，30天後體重預計約為 <b>${futureWeight.toFixed(1)} kg</b>`;
+                    `💡 依照此健康速度，30天後體重預計約為 <b>${futureWeight.toFixed(1)} kg</b>`;
                 
-                let alertHtml = "";
-                if (targetCalories < globalBMR) {
-                    alertHtml += `<strong>⚠️ 熱量警示：低於基礎代謝</strong>
-                                  建議攝取量 (${targetCalories} kcal) 低於基礎代謝 (${globalBMR} kcal)。<br>
-                                  長期執行可能導致代謝下降，建議選擇較溫和的減重速度。`;
-                }
-                if (targetCalories < 1000) {
-                    alertHtml = `<strong>🚫 危險：熱量攝取過低</strong>
-                                 建議熱量僅 ${targetCalories} kcal，低於人體所需。<br>
-                                 請務必選擇「溫和」減重模式，或諮詢醫師協助，切勿強行斷食。`;
-                }
-                if (alertHtml !== "") {
-                    safetyAlertEl.innerHTML = alertHtml;
-                    safetyAlertEl.style.display = 'block';
-                }
-
+                // 5. 移除原本的紅色警示，因為現在數值已經自動安全化了
             } else {
                 targetCalories = globalTDEE;
                 document.getElementById('predictionBox').style.display = 'none';
