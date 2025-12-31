@@ -11,11 +11,14 @@
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-color: #334155;
-            --danger-color: #ef4444;
+            --danger-bg: #fef2f2;
+            --danger-border: #fecaca;
+            --danger-text: #991b1b;
+            --warning-bg: #fff7ed;
+            --warning-border: #fed7aa;
+            --warning-text: #9a3412;
             --predict-bg: #e0f2fe;
             --predict-border: #bae6fd;
-            --health-bg: #f3e8ff;
-            --health-border: #d8b4fe;
             --badge-bg: #ecfccb;
             --badge-text: #3f6212;
         }
@@ -146,7 +149,7 @@
             transform: scale(0.98);
         }
 
-        /* 結果顯示 */
+        /* 結果顯示區 */
         #healthReportSection, #dietPlanSection {
             display: none;
             padding: 0 2rem;
@@ -163,10 +166,10 @@
             border-top: 1px dashed #cbd5e1;
         }
 
-        /* 健康卡片 */
+        /* 健康數據卡片 */
         .health-card {
-            background-color: var(--health-bg);
-            border: 1px solid var(--health-border);
+            background-color: #f3e8ff;
+            border: 1px solid #d8b4fe;
             border-radius: 12px;
             padding: 1.2rem;
             margin-top: 1.5rem;
@@ -200,7 +203,7 @@
             margin-top: 2px;
         }
 
-        /* 建議訊息 */
+        /* 一般建議框 (BMI相關) */
         .advice-box {
             padding: 1rem;
             border-radius: 8px;
@@ -227,6 +230,28 @@
             padding: 1rem;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
+        }
+
+        /* 警示專區 (新增的 CSS) */
+        .safety-alert-box {
+            display: none; /* 預設隱藏 */
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background-color: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: var(--warning-text);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: left;
+        }
+        .safety-title {
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            font-size: 1rem;
         }
 
         /* 食譜卡片 */
@@ -454,6 +479,11 @@
             
             <div class="result-title" id="dietTitle">建議每日攝取</div>
             <div class="big-number" id="targetDisplay">0 <span class="unit">kcal</span></div>
+
+            <div id="safetyAlertBox" class="safety-alert-box">
+                <div class="safety-title">⚠️ 安全調整提示</div>
+                <div id="safetyMessage"></div>
+            </div>
 
             <div id="predictionBox" class="prediction-card">
                 <div class="predict-row">
@@ -722,25 +752,42 @@
 
         function generateMenu() {
             let targetCalories = 0;
-            let realDeficit = 0; // 實際的熱量缺口
+            let realDeficit = 0;
+            
+            // 取得 UI 元素
+            const safetyAlertBox = document.getElementById('safetyAlertBox');
+            const safetyMessage = document.getElementById('safetyMessage');
 
             if (isNeedDiet) {
-                // 1. 取得使用者希望的熱量缺口 (300 / 500 / 770)
+                // 1. 取得使用者希望的熱量缺口
                 let selectedDeficit = parseFloat(document.getElementById('goal').value);
                 
-                // 2. 核心防呆邏輯：計算目標熱量
-                // 取 (TDEE - 缺口) 與 (BMR) 中的「最大值」
-                // 這保證了：即使使用者選了激進減重，結果也絕對不會低於 BMR
-                targetCalories = Math.max(globalBMR, globalTDEE - selectedDeficit);
+                // 2. 試算：原本應該扣多少
+                let potentialTarget = globalTDEE - selectedDeficit;
+
+                // 3. 判斷是否低於 BMR (觸發警示的關鍵)
+                if (potentialTarget < globalBMR) {
+                    // 情況 A：太低了 -> 強制設定為 BMR
+                    targetCalories = globalBMR;
+                    
+                    // 顯示警示框！告訴使用者為什麼不聽他的話
+                    safetyAlertBox.style.display = 'block';
+                    safetyMessage.innerHTML = `
+                        您選擇的減重幅度會使熱量低於基礎代謝 (${globalBMR} kcal)。<br>
+                        為了避免肌肉流失與復胖，<strong>系統已自動調整建議熱量至您的基礎代謝值</strong>。
+                    `;
+                } else {
+                    // 情況 B：很安全 -> 照算
+                    targetCalories = potentialTarget;
+                    safetyAlertBox.style.display = 'none'; // 隱藏警示
+                }
                 
-                // 3. 反推「實際」熱量缺口 (用於準確計算預計體重)
-                // 如果被 BMR 卡住，實際缺口會小於原本選的 (例如本來想減 770，但卡在 BMR 後實際只減 400)
+                // 4. 反推實際缺口 (用於準確預測)
                 realDeficit = globalTDEE - targetCalories;
                 
                 document.getElementById('predictionBox').style.display = 'flex';
                 document.getElementById('dietTitle').textContent = "建議減重攝取熱量";
 
-                // 4. 計算預測值 (使用實際缺口)
                 const weeklyLossKg = (realDeficit * 7) / 7700;
                 const monthlyLossKg = (realDeficit * 30) / 7700;
                 const futureWeight = globalWeight - monthlyLossKg;
@@ -750,10 +797,10 @@
                 document.getElementById('finalWeightNote').innerHTML = 
                     `💡 依照此健康速度，30天後體重預計約為 <b>${futureWeight.toFixed(1)} kg</b>`;
                 
-                // 5. 移除原本的紅色警示，因為現在數值已經自動安全化了
             } else {
                 targetCalories = globalTDEE;
                 document.getElementById('predictionBox').style.display = 'none';
+                safetyAlertBox.style.display = 'none';
                 document.getElementById('dietTitle').textContent = "建議維持健康熱量";
             }
 
