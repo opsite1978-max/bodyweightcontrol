@@ -14,7 +14,7 @@
             --danger-color: #ef4444;
             --predict-bg: #e0f2fe;
             --predict-border: #bae6fd;
-            --health-bg: #f3e8ff; /* 健康數據底色 */
+            --health-bg: #f3e8ff;
             --health-border: #d8b4fe;
         }
 
@@ -38,6 +38,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            padding-bottom: 2rem;
         }
 
         /* 封面設計 */
@@ -77,7 +78,7 @@
 
         /* 表單區域 */
         .content {
-            padding: 2rem;
+            padding: 2rem 2rem 0 2rem;
         }
 
         .form-group {
@@ -109,6 +110,18 @@
             background-color: #fff;
         }
 
+        /* 運動定義說明文字 (新增) */
+        .helper-text {
+            font-size: 0.85rem;
+            color: #0ea5e9; /* 藍色 */
+            margin-top: 6px;
+            background: #e0f2fe;
+            padding: 8px 12px;
+            border-radius: 8px;
+            line-height: 1.4;
+            display: none; /* 預設隱藏，用JS顯示 */
+        }
+
         .btn-calc {
             width: 100%;
             background-color: #1e293b;
@@ -122,17 +135,20 @@
             margin-top: 1rem;
             transition: transform 0.1s;
         }
+        
+        .btn-secondary {
+            background-color: var(--primary-color);
+            margin-top: 1.5rem;
+        }
 
         .btn-calc:active {
             transform: scale(0.98);
         }
 
         /* 結果顯示 */
-        #resultSection {
+        #healthReportSection, #dietPlanSection {
             display: none;
-            background-color: #ffffff;
-            margin: 0 0 2rem;
-            padding: 0 2rem 2rem;
+            padding: 0 2rem;
             animation: fadeIn 0.5s ease;
         }
 
@@ -141,43 +157,18 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .result-title {
-            text-align: center;
-            color: var(--primary-color);
-            font-weight: 700;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-            margin-top: 2rem;
+        .divider {
+            margin: 1.5rem 0;
+            border-top: 1px dashed #cbd5e1;
         }
 
-        .big-number {
-            font-size: 2.5rem;
-            font-weight: 800;
-            text-align: center;
-            color: var(--primary-color);
-            line-height: 1;
-        }
-
-        .unit {
-            font-size: 1rem;
-            color: #64748b;
-        }
-
-        .warning {
-            color: var(--danger-color);
-            font-size: 0.85rem;
-            text-align: center;
-            margin-top: 0.5rem;
-            font-weight: 600;
-        }
-
-        /* BMI 與 維持熱量卡片 (新增) */
+        /* 健康卡片 */
         .health-card {
             background-color: var(--health-bg);
             border: 1px solid var(--health-border);
             border-radius: 12px;
             padding: 1.2rem;
-            margin-bottom: 1.5rem;
+            margin-top: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -208,35 +199,53 @@
             margin-top: 2px;
         }
 
-        /* AI 預測區塊 */
-        .prediction-card {
-            background-color: var(--predict-bg);
-            border: 1px solid var(--predict-border);
-            border-radius: 12px;
+        /* 建議訊息 */
+        .advice-box {
             padding: 1rem;
-            margin: 1.5rem 0;
-            display: flex;
-            justify-content: space-around;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-weight: bold;
             text-align: center;
+            font-size: 0.95rem;
         }
-        
-        .predict-item h4 {
-            margin: 0 0 5px 0;
-            font-size: 0.8rem;
-            color: #0369a1;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .advice-warn {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
         }
-
-        .predict-val {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: #0ea5e9;
+        .advice-good {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
         }
 
-        .predict-sub {
-            font-size: 0.8rem;
-            color: #64748b;
+        #weightLossOptions {
+            display: none;
+            margin-top: 1.5rem;
+            background: #fff;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+
+        /* 危險警示框 (新增) */
+        .safety-alert {
+            background-color: #fff1f2;
+            border: 1px solid #fda4af;
+            color: #be123c;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: none; /* 預設隱藏 */
+        }
+        .safety-alert strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1rem;
+            color: #9f1239;
         }
 
         /* 食譜卡片 */
@@ -274,6 +283,71 @@
             font-size: 0.9rem;
             color: #555;
             line-height: 1.6;
+        }
+
+        .result-title {
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
+        
+        .big-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        .unit { font-size: 1rem; color: #64748b; }
+
+        /* AI 預測區塊 */
+        .prediction-card {
+            background-color: var(--predict-bg);
+            border: 1px solid var(--predict-border);
+            border-radius: 12px;
+            padding: 1.2rem 1rem;
+            margin: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .predict-row {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .predict-item h4 {
+            margin: 0 0 5px 0;
+            font-size: 0.8rem;
+            color: #0369a1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .predict-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0ea5e9;
+        }
+
+        .predict-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .predict-note {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(186, 230, 253, 0.5);
+            text-align: center;
+            font-size: 0.85rem;
+            color: #0284c7;
+            font-weight: 500;
         }
 
     </style>
@@ -314,72 +388,86 @@
 
             <div class="form-group">
                 <label>日常活動量</label>
-                <select id="activity">
-                    <option value="1.2">久坐 (辦公室工作)</option>
-                    <option value="1.375">輕度 (每週運動1-3天)</option>
-                    <option value="1.55">中度 (每週運動3-5天)</option>
-                    <option value="1.725">高度 (勞力工作/頻繁運動)</option>
+                <select id="activity" onchange="updateActivityHelp()">
+                    <option value="1.2">久坐</option>
+                    <option value="1.375">輕度活動</option>
+                    <option value="1.55">中度活動</option>
+                    <option value="1.725">高度活動</option>
                 </select>
+                <div id="activityHelper" class="helper-text">
+                    辦公室工作，幾乎不運動。
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>每日減重目標 (熱量赤字)</label>
-                <select id="goal">
-                    <option value="300">保守 (-300 kcal)</option>
-                    <option value="500" selected>標準 (-500 kcal)</option>
-                    <option value="770">積極 (-770 kcal)</option>
-                </select>
-            </div>
-
-            <button class="btn-calc" onclick="calculate()">計算專屬建議</button>
+            <button class="btn-calc" onclick="analyzeHealth()">第一步：分析健康狀況</button>
         </div>
 
-        <div id="resultSection">
-            
-            <div style="margin: 0 0 1.5rem 0; border-top: 1px dashed #cbd5e1;"></div>
-
+        <div id="healthReportSection">
             <div class="health-card">
                 <div class="health-item">
-                    <h4>您的 BMI 指數</h4>
+                    <h4>BMI 指數</h4>
                     <div class="health-val" id="bmiDisplay">0.0</div>
                     <div class="health-sub" id="bmiStatus">檢測中</div>
                 </div>
                 <div style="width:1px; height: 40px; background:#d8b4fe;"></div>
                 <div class="health-item">
-                    <h4>維持目前體重</h4>
-                    <div class="health-val" id="tdeeDisplay">0</div>
+                    <h4>基礎代謝率 (BMR)</h4>
+                    <div class="health-val" id="bmrDisplay">0</div>
                     <div class="health-sub">kcal / 日</div>
                 </div>
             </div>
 
-            <div class="result-title">建議減重攝取熱量</div>
-            <div class="big-number" id="targetDisplay">0 <span class="unit">kcal</span></div>
-            <div id="warningMsg" class="warning"></div>
+            <div id="adviceBox" class="advice-box"></div>
 
-            <div class="prediction-card">
-                <div class="predict-item">
-                    <h4>每週預計減重</h4>
-                    <div class="predict-val" id="weeklyLoss">0.0</div>
-                    <div class="predict-sub">kg / 週</div>
+            <div id="weightLossOptions">
+                <label style="margin-bottom:10px;">📉 請選擇您希望的減重速度：</label>
+                <select id="goal">
+                    <option value="300">溫和 (每週約瘦 0.3 kg)</option>
+                    <option value="500" selected>標準 (每週約瘦 0.5 kg)</option>
+                    <option value="770">積極 (每週約瘦 0.8 kg)</option>
+                </select>
+            </div>
+
+            <button id="btnGenerateMenu" class="btn-calc btn-secondary" onclick="generateMenu()">
+                查看專屬食譜
+            </button>
+        </div>
+
+        <div id="dietPlanSection">
+            <div class="divider"></div>
+            
+            <div class="result-title" id="dietTitle">建議每日攝取</div>
+            <div class="big-number" id="targetDisplay">0 <span class="unit">kcal</span></div>
+
+            <div id="safetyAlert" class="safety-alert"></div>
+
+            <div id="predictionBox" class="prediction-card">
+                <div class="predict-row">
+                    <div class="predict-item">
+                        <h4>預計每週減輕</h4>
+                        <div class="predict-val" id="weeklyLoss">0.0</div>
+                        <div class="predict-sub">kg</div>
+                    </div>
+                    <div style="width:1px; background:#bae6fd;"></div>
+                    <div class="predict-item">
+                        <h4>預計整月減輕</h4>
+                        <div class="predict-val" id="monthlyLoss">0.0</div>
+                        <div class="predict-sub">kg</div>
+                    </div>
                 </div>
-                <div style="width:1px; background:#bae6fd;"></div>
-                <div class="predict-item">
-                    <h4>30天後體重</h4>
-                    <div class="predict-val" id="monthWeight">0.0</div>
-                    <div class="predict-sub">kg (預估)</div>
+                <div class="predict-note" id="finalWeightNote">
+                    💡 照這速度，30天後體重約為 00.0 kg
                 </div>
             </div>
 
-            <div class="result-title" style="font-size: 1rem; margin-bottom: 0;">🥗 晨禾營養師推薦食譜</div>
+            <div class="result-title" style="font-size: 1rem; margin-bottom: 0;">🥗 示範食譜</div>
             
             <div class="menu-card">
                 <div class="menu-header">
                     <span class="menu-title">早餐 Breakfast</span>
                     <span class="menu-kcal" id="kcalBreakfast">0 kcal</span>
                 </div>
-                <div class="menu-items" id="menuBreakfast">
-                    載入中...
-                </div>
+                <div class="menu-items" id="menuBreakfast">Loading...</div>
             </div>
 
             <div class="menu-card">
@@ -387,9 +475,7 @@
                     <span class="menu-title">午餐 Lunch</span>
                     <span class="menu-kcal" id="kcalLunch">0 kcal</span>
                 </div>
-                <div class="menu-items" id="menuLunch">
-                    載入中...
-                </div>
+                <div class="menu-items" id="menuLunch">Loading...</div>
             </div>
 
             <div class="menu-card">
@@ -397,104 +483,192 @@
                     <span class="menu-title">晚餐 Dinner</span>
                     <span class="menu-kcal" id="kcalDinner">0 kcal</span>
                 </div>
-                <div class="menu-items" id="menuDinner">
-                    載入中...
-                </div>
+                <div class="menu-items" id="menuDinner">Loading...</div>
             </div>
-            
         </div>
     </div>
 
     <script>
+        // 全域變數
+        let globalTDEE = 0;
+        let globalBMR = 0; // 新增 BMR 全域變數供檢查用
+        let globalWeight = 0;
+        let isNeedDiet = false;
+
+        // 活動量說明字典
+        const activityDefinitions = {
+            "1.2": "適合：靜態工作者、辦公室族群，幾乎不運動。",
+            "1.375": "適合：每週運動 1-3 天 (輕度流汗)。",
+            "1.55": "適合：每週運動 3-5 天 (中度強度)。",
+            "1.725": "適合：每週運動 6-7 天 或 勞力密集工作者。"
+        };
+
+        // 初始化：頁面載入時執行一次更新說明
+        window.onload = function() {
+            updateActivityHelp();
+        };
+
+        // 更新活動量說明的函式
+        function updateActivityHelp() {
+            const val = document.getElementById('activity').value;
+            const helper = document.getElementById('activityHelper');
+            helper.textContent = activityDefinitions[val];
+            helper.style.display = 'block';
+        }
+
         // 食譜資料庫
         const recipes = {
             low: {
-                breakfast: "🥣 無糖豆漿(200ml) + 水煮蛋(1顆) + 半個地瓜",
+                breakfast: "🥣 無糖豆漿(200ml) + 水煮蛋(1顆) + 地瓜(小)",
                 lunch: "🥗 雞胸肉沙拉(和風醬) + 五穀飯(半碗) + 燙青菜",
-                dinner: "🐟 蒸魚片/鯛魚 + 豆腐湯 + 少量水果"
+                dinner: "🐟 清蒸魚片 + 豆腐味噌湯 + 芭樂(半顆)"
             },
             medium: {
-                breakfast: "🥪 全麥鮪魚三明治 + 黑咖啡/無糖茶 + 蘋果一顆",
-                lunch: "🍱 滷雞腿(去皮) + 糙米飯(1碗) + 兩種蔬菜 + 蛋一顆",
-                dinner: "🍲 瘦肉片蔬菜鍋 (不喝湯) + 冬粉(半把)"
+                breakfast: "🥪 全麥鮪魚三明治(少乃滋) + 黑咖啡",
+                lunch: "🍱 滷雞腿便當(去皮、飯少三分之一) + 多一份青菜",
+                dinner: "🍲 蔬菜瘦肉鍋 (不喝湯、不沾沙茶) + 冬粉"
             },
-            high: {
-                breakfast: "🥯 貝果 + 煎蛋 + 希臘優格 + 堅果一小把",
-                lunch: "🥩 煎牛排/豬排(掌心大) + 馬鈴薯泥 + 大份沙拉",
-                dinner: "🍛 雞肉咖哩(少醬) + 藜麥飯 + 炒時蔬"
+            high: { 
+                breakfast: "🥯 貝果夾起司蛋 + 拿鐵 + 堅果一小把",
+                lunch: "🥩 煎豬排定食(正常飯量) + 生菜沙拉 + 毛豆",
+                dinner: "🍛 雞肉咖哩飯 + 炒時蔬 + 蛋花湯"
             }
         };
 
-        function calculate() {
-            // 1. 獲取數值
+        function analyzeHealth() {
             const sex = document.getElementById('sex').value;
             const age = parseFloat(document.getElementById('age').value);
             const height = parseFloat(document.getElementById('height').value);
             const weight = parseFloat(document.getElementById('weight').value);
             const activity = parseFloat(document.getElementById('activity').value);
-            const goal = parseFloat(document.getElementById('goal').value);
 
-            // 2. 計算 BMI
+            if (!height || !weight) { alert("請輸入身高與體重"); return; }
+
+            globalWeight = weight;
+
+            // 計算 BMI
             const heightM = height / 100;
             const bmi = weight / (heightM * heightM);
             let bmiStatusText = "";
-            
-            // 台灣衛福部 BMI 標準
-            if (bmi < 18.5) bmiStatusText = "體重過輕";
-            else if (bmi < 24) bmiStatusText = "健康體位";
-            else if (bmi < 27) bmiStatusText = "過重";
-            else bmiStatusText = "輕度肥胖"; // 簡化顯示，實際上27以上就算肥胖
+            let isOverweight = false;
 
-            // 3. 計算 BMR (Mifflin-St Jeor 公式)
-            let bmr;
+            if (bmi < 18.5) {
+                bmiStatusText = "體重過輕";
+            } else if (bmi < 24) {
+                bmiStatusText = "健康體位";
+            } else if (bmi < 27) {
+                bmiStatusText = "過重";
+                isOverweight = true;
+            } else {
+                bmiStatusText = "肥胖";
+                isOverweight = true;
+            }
+            isNeedDiet = isOverweight;
+
+            // 計算 BMR
             if (sex === 'male') {
-                bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+                globalBMR = 10 * weight + 6.25 * height - 5 * age + 5;
             } else {
-                bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+                globalBMR = 10 * weight + 6.25 * height - 5 * age - 161;
             }
+            globalBMR = Math.round(globalBMR);
 
-            // 4. 計算 TDEE 與 目標
-            const tdee = Math.round(bmr * activity); // 這是維持體重熱量
-            const target = Math.round(tdee - goal);  // 這是減重熱量
+            // 計算 TDEE
+            globalTDEE = Math.round(globalBMR * activity);
 
-            // 5. AI 減重預測
-            const weeklyLossKg = (goal * 7) / 7700;
-            const monthlyLossKg = (goal * 30) / 7700;
-            const futureWeight = weight - monthlyLossKg;
-
-            // 6. 安全檢查
-            const warningEl = document.getElementById('warningMsg');
-            if (target < bmr) {
-                warningEl.textContent = "⚠️ 注意：此熱量低於基礎代謝，建議諮詢醫師";
-            } else {
-                warningEl.textContent = "";
-            }
-
-            // 7. 分配三餐熱量
-            const kBreakfast = Math.round(target * 0.3);
-            const kLunch = Math.round(target * 0.4);
-            const kDinner = Math.round(target * 0.3);
-
-            // 8. 選擇食譜等級
-            let menuLevel = 'medium';
-            if (target < 1400) menuLevel = 'low';
-            if (target > 1900) menuLevel = 'high';
-
-            // 9. 更新畫面
-            
-            // 健康儀表板 (新功能)
+            // 更新 UI
             document.getElementById('bmiDisplay').textContent = bmi.toFixed(1);
             document.getElementById('bmiStatus').textContent = bmiStatusText;
-            document.getElementById('tdeeDisplay').textContent = tdee; // 維持熱量
+            document.getElementById('bmrDisplay').textContent = globalBMR; // 顯示 BMR 而不是 TDEE (比較基準)
 
-            // 減重核心區
-            document.getElementById('targetDisplay').innerHTML = `${target} <span class="unit">kcal</span>`;
-            
-            // 預測區
-            document.getElementById('weeklyLoss').innerHTML = `-${weeklyLossKg.toFixed(1)}`;
-            document.getElementById('monthWeight').innerHTML = futureWeight.toFixed(1);
+            const adviceBox = document.getElementById('adviceBox');
+            const weightLossOptions = document.getElementById('weightLossOptions');
+            const btnGenerate = document.getElementById('btnGenerateMenu');
 
-            // 食譜區
+            if (isOverweight) {
+                adviceBox.className = "advice-box advice-warn";
+                adviceBox.innerHTML = "⚠️ 您的 BMI 偏高，建議進行飲食控制與減重。";
+                weightLossOptions.style.display = "block";
+                btnGenerate.textContent = "規劃減重食譜";
+            } else {
+                adviceBox.className = "advice-box advice-good";
+                adviceBox.innerHTML = "✅ 您的體態維持得很棒！建議攝取均衡營養以維持健康。";
+                weightLossOptions.style.display = "none";
+                btnGenerate.textContent = "查看健康維持食譜";
+            }
+
+            document.getElementById('healthReportSection').style.display = 'block';
+            document.getElementById('dietPlanSection').style.display = 'none';
+            document.getElementById('healthReportSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateMenu() {
+            let targetCalories = 0;
+            let goalBurn = 0;
+            const safetyAlertEl = document.getElementById('safetyAlert');
+            safetyAlertEl.style.display = 'none'; // 先重置
+
+            if (isNeedDiet) {
+                // 減重模式
+                goalBurn = parseFloat(document.getElementById('goal').value);
+                targetCalories = globalTDEE - goalBurn;
+                
+                document.getElementById('predictionBox').style.display = 'flex';
+                document.getElementById('dietTitle').textContent = "建議減重攝取熱量";
+
+                // 計算預測
+                const weeklyLossKg = (goalBurn * 7) / 7700;
+                const monthlyLossKg = (goalBurn * 30) / 7700;
+                const futureWeight = globalWeight - monthlyLossKg;
+                
+                document.getElementById('weeklyLoss').textContent = "-" + weeklyLossKg.toFixed(1);
+                document.getElementById('monthlyLoss').textContent = "-" + monthlyLossKg.toFixed(1);
+                document.getElementById('finalWeightNote').innerHTML = 
+                    `💡 照這速度，30天後體重預計約為 <b>${futureWeight.toFixed(1)} kg</b>`;
+                
+                // ===== 安全警示邏輯 (新功能) =====
+                let alertHtml = "";
+                
+                // 檢查 1: 是否低於 BMR
+                if (targetCalories < globalBMR) {
+                    alertHtml += `<strong>⚠️ 熱量警示：低於基礎代謝</strong>
+                                  目前的建議攝取量 (${targetCalories} kcal) 已低於您的基礎代謝 (${globalBMR} kcal)。<br>
+                                  長期執行可能導致肌肉流失或代謝下降，建議配合運動或選擇較溫和的減重速度。`;
+                }
+                
+                // 檢查 2: 是否低於 1000 kcal (極度危險)
+                if (targetCalories < 1000) {
+                    alertHtml = `<strong>🚫 危險：熱量攝取過低</strong>
+                                 建議熱量僅 ${targetCalories} kcal，這已低於人體維持生理機能所需。<br>
+                                 請務必選擇「溫和」減重模式，或諮詢醫師協助，切勿強行斷食。`;
+                    // 強制修正為最低限度 (避免顯示過低的數字) 或 保持顯示但紅框警告
+                }
+
+                if (alertHtml !== "") {
+                    safetyAlertEl.innerHTML = alertHtml;
+                    safetyAlertEl.style.display = 'block';
+                }
+                // ==============================
+
+            } else {
+                // 維持模式
+                targetCalories = globalTDEE;
+                document.getElementById('predictionBox').style.display = 'none';
+                document.getElementById('dietTitle').textContent = "建議維持健康熱量";
+            }
+
+            document.getElementById('targetDisplay').innerHTML = `${targetCalories} <span class="unit">kcal</span>`;
+
+            // 分配三餐
+            const kBreakfast = Math.round(targetCalories * 0.3);
+            const kLunch = Math.round(targetCalories * 0.4);
+            const kDinner = Math.round(targetCalories * 0.3);
+
+            // 選擇食譜
+            let menuLevel = 'medium';
+            if (targetCalories < 1400) menuLevel = 'low';
+            if (targetCalories > 2000) menuLevel = 'high';
+
             document.getElementById('kcalBreakfast').textContent = `約 ${kBreakfast} kcal`;
             document.getElementById('menuBreakfast').textContent = recipes[menuLevel].breakfast;
 
@@ -504,9 +678,8 @@
             document.getElementById('kcalDinner').textContent = `約 ${kDinner} kcal`;
             document.getElementById('menuDinner').textContent = recipes[menuLevel].dinner;
 
-            // 顯示結果
-            document.getElementById('resultSection').style.display = 'block';
-            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('dietPlanSection').style.display = 'block';
+            document.getElementById('dietPlanSection').scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
