@@ -16,6 +16,8 @@
             --predict-border: #bae6fd;
             --health-bg: #f3e8ff;
             --health-border: #d8b4fe;
+            --badge-bg: #ecfccb; /* 份量標籤底色 */
+            --badge-text: #3f6212;
         }
 
         body {
@@ -110,16 +112,15 @@
             background-color: #fff;
         }
 
-        /* 運動定義說明文字 (新增) */
         .helper-text {
             font-size: 0.85rem;
-            color: #0ea5e9; /* 藍色 */
+            color: #0ea5e9;
             margin-top: 6px;
             background: #e0f2fe;
             padding: 8px 12px;
             border-radius: 8px;
             line-height: 1.4;
-            display: none; /* 預設隱藏，用JS顯示 */
+            display: none;
         }
 
         .btn-calc {
@@ -228,7 +229,6 @@
             border-radius: 12px;
         }
 
-        /* 危險警示框 (新增) */
         .safety-alert {
             background-color: #fff1f2;
             border: 1px solid #fda4af;
@@ -239,7 +239,7 @@
             text-align: left;
             font-size: 0.9rem;
             line-height: 1.5;
-            display: none; /* 預設隱藏 */
+            display: none;
         }
         .safety-alert strong {
             display: block;
@@ -248,7 +248,7 @@
             color: #9f1239;
         }
 
-        /* 食譜卡片 */
+        /* 食譜卡片 (圖示版樣式) */
         .menu-card {
             background: #fcfcfc;
             border-radius: 12px;
@@ -264,7 +264,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 0.5rem;
         }
 
         .menu-title {
@@ -279,10 +281,45 @@
             border-radius: 10px;
         }
 
-        .menu-items {
-            font-size: 0.9rem;
-            color: #555;
-            line-height: 1.6;
+        /* 新增：食物清單樣式 */
+        .food-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .food-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .food-icon {
+            font-size: 1.6rem;
+            width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .food-info {
+            flex-grow: 1;
+        }
+
+        .food-name {
+            font-size: 0.95rem;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .food-portion {
+            display: inline-block;
+            background-color: var(--badge-bg);
+            color: var(--badge-text);
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 600;
         }
 
         .result-title {
@@ -460,14 +497,14 @@
                 </div>
             </div>
 
-            <div class="result-title" style="font-size: 1rem; margin-bottom: 0;">🥗 示範食譜</div>
+            <div class="result-title" style="font-size: 1rem; margin-bottom: 0;">🥗 示範食譜 (營養師建議)</div>
             
             <div class="menu-card">
                 <div class="menu-header">
                     <span class="menu-title">早餐 Breakfast</span>
                     <span class="menu-kcal" id="kcalBreakfast">0 kcal</span>
                 </div>
-                <div class="menu-items" id="menuBreakfast">Loading...</div>
+                <div class="food-list" id="menuBreakfast">Loading...</div>
             </div>
 
             <div class="menu-card">
@@ -475,7 +512,7 @@
                     <span class="menu-title">午餐 Lunch</span>
                     <span class="menu-kcal" id="kcalLunch">0 kcal</span>
                 </div>
-                <div class="menu-items" id="menuLunch">Loading...</div>
+                <div class="food-list" id="menuLunch">Loading...</div>
             </div>
 
             <div class="menu-card">
@@ -483,19 +520,21 @@
                     <span class="menu-title">晚餐 Dinner</span>
                     <span class="menu-kcal" id="kcalDinner">0 kcal</span>
                 </div>
-                <div class="menu-items" id="menuDinner">Loading...</div>
+                <div class="food-list" id="menuDinner">Loading...</div>
+            </div>
+            
+            <div style="text-align:center; font-size:0.8rem; color:#999; margin-top:20px;">
+                * 請保持每天飲水 2000cc 以上以幫助代謝
             </div>
         </div>
     </div>
 
     <script>
-        // 全域變數
         let globalTDEE = 0;
-        let globalBMR = 0; // 新增 BMR 全域變數供檢查用
+        let globalBMR = 0;
         let globalWeight = 0;
         let isNeedDiet = false;
 
-        // 活動量說明字典
         const activityDefinitions = {
             "1.2": "適合：靜態工作者、辦公室族群，幾乎不運動。",
             "1.375": "適合：每週運動 1-3 天 (輕度流汗)。",
@@ -503,12 +542,10 @@
             "1.725": "適合：每週運動 6-7 天 或 勞力密集工作者。"
         };
 
-        // 初始化：頁面載入時執行一次更新說明
         window.onload = function() {
             updateActivityHelp();
         };
 
-        // 更新活動量說明的函式
         function updateActivityHelp() {
             const val = document.getElementById('activity').value;
             const helper = document.getElementById('activityHelper');
@@ -516,22 +553,139 @@
             helper.style.display = 'block';
         }
 
-        // 食譜資料庫
+        // --- 食譜資料庫 (圖示 + 標籤結構) ---
         const recipes = {
             low: {
-                breakfast: "🥣 無糖豆漿(200ml) + 水煮蛋(1顆) + 地瓜(小)",
-                lunch: "🥗 雞胸肉沙拉(和風醬) + 五穀飯(半碗) + 燙青菜",
-                dinner: "🐟 清蒸魚片 + 豆腐味噌湯 + 芭樂(半顆)"
+                breakfast: `
+                    <div class="food-item">
+                        <div class="food-icon">🥚</div>
+                        <div class="food-info"><div class="food-name">水煮蛋 + 無糖豆漿</div><span class="food-portion">1顆 + 250ml</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🍠</div>
+                        <div class="food-info"><div class="food-name">蒸地瓜</div><span class="food-portion">約拳頭一半大</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🍅</div>
+                        <div class="food-info"><div class="food-name">大番茄</div><span class="food-portion">1 顆</span></div>
+                    </div>
+                `,
+                lunch: `
+                    <div class="food-item">
+                        <div class="food-icon">🐔</div>
+                        <div class="food-info"><div class="food-name">舒肥雞胸肉</div><span class="food-portion">150g (約手掌大)</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🍚</div>
+                        <div class="food-info"><div class="food-name">五穀飯</div><span class="food-portion">半碗</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥬</div>
+                        <div class="food-info"><div class="food-name">燙青菜 (淋少許醬油)</div><span class="food-portion">2 份 (約兩拳頭)</span></div>
+                    </div>
+                `,
+                dinner: `
+                    <div class="food-item">
+                        <div class="food-icon">🐟</div>
+                        <div class="food-info"><div class="food-name">清蒸魚片 / 海鮮</div><span class="food-portion">1 份</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥣</div>
+                        <div class="food-info"><div class="food-name">豆腐味噌湯</div><span class="food-portion">1 碗 (豆腐半盒)</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🚫</div>
+                        <div class="food-info"><div class="food-name">晚餐澱粉</div><span class="food-portion">建議不吃</span></div>
+                    </div>
+                `
             },
             medium: {
-                breakfast: "🥪 全麥鮪魚三明治(少乃滋) + 黑咖啡",
-                lunch: "🍱 滷雞腿便當(去皮、飯少三分之一) + 多一份青菜",
-                dinner: "🍲 蔬菜瘦肉鍋 (不喝湯、不沾沙茶) + 冬粉"
+                breakfast: `
+                    <div class="food-item">
+                        <div class="food-icon">🍞</div>
+                        <div class="food-info"><div class="food-name">全麥吐司</div><span class="food-portion">2 片</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🐟</div>
+                        <div class="food-info"><div class="food-name">水煮鮪魚罐頭</div><span class="food-portion">半罐</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">☕</div>
+                        <div class="food-info"><div class="food-name">黑咖啡 / 無糖茶</div><span class="food-portion">1 杯</span></div>
+                    </div>
+                `,
+                lunch: `
+                    <div class="food-item">
+                        <div class="food-icon">🍱</div>
+                        <div class="food-info"><div class="food-name">滷雞腿便當 (去皮)</div><span class="food-portion">1 個</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🍚</div>
+                        <div class="food-info"><div class="food-name">白飯調整</div><span class="food-portion">吃 2/3 碗</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥬</div>
+                        <div class="food-info"><div class="food-name">加點燙青菜</div><span class="food-portion">1 份</span></div>
+                    </div>
+                `,
+                dinner: `
+                    <div class="food-item">
+                        <div class="food-icon">🍲</div>
+                        <div class="food-info"><div class="food-name">日式小火鍋</div><span class="food-portion">昆布湯底</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥩</div>
+                        <div class="food-info"><div class="food-name">低脂牛肉 / 梅花豬</div><span class="food-portion">約 6-8 片</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🍜</div>
+                        <div class="food-info"><div class="food-name">冬粉 (代替白飯)</div><span class="food-portion">1 把</span></div>
+                    </div>
+                `
             },
-            high: { 
-                breakfast: "🥯 貝果夾起司蛋 + 拿鐵 + 堅果一小把",
-                lunch: "🥩 煎豬排定食(正常飯量) + 生菜沙拉 + 毛豆",
-                dinner: "🍛 雞肉咖哩飯 + 炒時蔬 + 蛋花湯"
+            high: {
+                breakfast: `
+                    <div class="food-item">
+                        <div class="food-icon">🥯</div>
+                        <div class="food-info"><div class="food-name">貝果夾起司蛋</div><span class="food-portion">1 份</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥛</div>
+                        <div class="food-info"><div class="food-name">拿鐵 (含奶)</div><span class="food-portion">1 杯</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥜</div>
+                        <div class="food-info"><div class="food-name">綜合堅果</div><span class="food-portion">1 小把</span></div>
+                    </div>
+                `,
+                lunch: `
+                    <div class="food-item">
+                        <div class="food-icon">🍛</div>
+                        <div class="food-info"><div class="food-name">里肌豬排定食</div><span class="food-portion">正常飯量</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥗</div>
+                        <div class="food-info"><div class="food-name">生菜沙拉</div><span class="food-portion">1 碗</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥣</div>
+                        <div class="food-info"><div class="food-name">味噌湯</div><span class="food-portion">1 碗</span></div>
+                    </div>
+                `,
+                dinner: `
+                    <div class="food-item">
+                        <div class="food-icon">🍛</div>
+                        <div class="food-info"><div class="food-name">雞肉咖哩飯</div><span class="food-portion">1 盤</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥬</div>
+                        <div class="food-info"><div class="food-name">炒時蔬</div><span class="food-portion">1 盤</span></div>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-icon">🥚</div>
+                        <div class="food-info"><div class="food-name">蛋花湯</div><span class="food-portion">1 碗</span></div>
+                    </div>
+                `
             }
         };
 
@@ -546,40 +700,28 @@
 
             globalWeight = weight;
 
-            // 計算 BMI
             const heightM = height / 100;
             const bmi = weight / (heightM * heightM);
             let bmiStatusText = "";
             let isOverweight = false;
 
-            if (bmi < 18.5) {
-                bmiStatusText = "體重過輕";
-            } else if (bmi < 24) {
-                bmiStatusText = "健康體位";
-            } else if (bmi < 27) {
-                bmiStatusText = "過重";
-                isOverweight = true;
-            } else {
-                bmiStatusText = "肥胖";
-                isOverweight = true;
-            }
+            if (bmi < 18.5) { bmiStatusText = "體重過輕"; }
+            else if (bmi < 24) { bmiStatusText = "健康體位"; }
+            else if (bmi < 27) { bmiStatusText = "過重"; isOverweight = true; }
+            else { bmiStatusText = "肥胖"; isOverweight = true; }
             isNeedDiet = isOverweight;
 
-            // 計算 BMR
             if (sex === 'male') {
                 globalBMR = 10 * weight + 6.25 * height - 5 * age + 5;
             } else {
                 globalBMR = 10 * weight + 6.25 * height - 5 * age - 161;
             }
             globalBMR = Math.round(globalBMR);
-
-            // 計算 TDEE
             globalTDEE = Math.round(globalBMR * activity);
 
-            // 更新 UI
             document.getElementById('bmiDisplay').textContent = bmi.toFixed(1);
             document.getElementById('bmiStatus').textContent = bmiStatusText;
-            document.getElementById('bmrDisplay').textContent = globalBMR; // 顯示 BMR 而不是 TDEE (比較基準)
+            document.getElementById('bmrDisplay').textContent = globalBMR;
 
             const adviceBox = document.getElementById('adviceBox');
             const weightLossOptions = document.getElementById('weightLossOptions');
@@ -606,17 +748,15 @@
             let targetCalories = 0;
             let goalBurn = 0;
             const safetyAlertEl = document.getElementById('safetyAlert');
-            safetyAlertEl.style.display = 'none'; // 先重置
+            safetyAlertEl.style.display = 'none';
 
             if (isNeedDiet) {
-                // 減重模式
                 goalBurn = parseFloat(document.getElementById('goal').value);
                 targetCalories = globalTDEE - goalBurn;
                 
                 document.getElementById('predictionBox').style.display = 'flex';
                 document.getElementById('dietTitle').textContent = "建議減重攝取熱量";
 
-                // 計算預測
                 const weeklyLossKg = (goalBurn * 7) / 7700;
                 const monthlyLossKg = (goalBurn * 30) / 7700;
                 const futureWeight = globalWeight - monthlyLossKg;
@@ -626,32 +766,23 @@
                 document.getElementById('finalWeightNote').innerHTML = 
                     `💡 照這速度，30天後體重預計約為 <b>${futureWeight.toFixed(1)} kg</b>`;
                 
-                // ===== 安全警示邏輯 (新功能) =====
                 let alertHtml = "";
-                
-                // 檢查 1: 是否低於 BMR
                 if (targetCalories < globalBMR) {
                     alertHtml += `<strong>⚠️ 熱量警示：低於基礎代謝</strong>
-                                  目前的建議攝取量 (${targetCalories} kcal) 已低於您的基礎代謝 (${globalBMR} kcal)。<br>
-                                  長期執行可能導致肌肉流失或代謝下降，建議配合運動或選擇較溫和的減重速度。`;
+                                  建議攝取量 (${targetCalories} kcal) 低於基礎代謝 (${globalBMR} kcal)。<br>
+                                  長期執行可能導致代謝下降，建議選擇較溫和的減重速度。`;
                 }
-                
-                // 檢查 2: 是否低於 1000 kcal (極度危險)
                 if (targetCalories < 1000) {
                     alertHtml = `<strong>🚫 危險：熱量攝取過低</strong>
-                                 建議熱量僅 ${targetCalories} kcal，這已低於人體維持生理機能所需。<br>
+                                 建議熱量僅 ${targetCalories} kcal，低於人體所需。<br>
                                  請務必選擇「溫和」減重模式，或諮詢醫師協助，切勿強行斷食。`;
-                    // 強制修正為最低限度 (避免顯示過低的數字) 或 保持顯示但紅框警告
                 }
-
                 if (alertHtml !== "") {
                     safetyAlertEl.innerHTML = alertHtml;
                     safetyAlertEl.style.display = 'block';
                 }
-                // ==============================
 
             } else {
-                // 維持模式
                 targetCalories = globalTDEE;
                 document.getElementById('predictionBox').style.display = 'none';
                 document.getElementById('dietTitle').textContent = "建議維持健康熱量";
@@ -659,24 +790,22 @@
 
             document.getElementById('targetDisplay').innerHTML = `${targetCalories} <span class="unit">kcal</span>`;
 
-            // 分配三餐
             const kBreakfast = Math.round(targetCalories * 0.3);
             const kLunch = Math.round(targetCalories * 0.4);
             const kDinner = Math.round(targetCalories * 0.3);
 
-            // 選擇食譜
             let menuLevel = 'medium';
             if (targetCalories < 1400) menuLevel = 'low';
             if (targetCalories > 2000) menuLevel = 'high';
 
             document.getElementById('kcalBreakfast').textContent = `約 ${kBreakfast} kcal`;
-            document.getElementById('menuBreakfast').textContent = recipes[menuLevel].breakfast;
+            document.getElementById('menuBreakfast').innerHTML = recipes[menuLevel].breakfast;
 
             document.getElementById('kcalLunch').textContent = `約 ${kLunch} kcal`;
-            document.getElementById('menuLunch').textContent = recipes[menuLevel].lunch;
+            document.getElementById('menuLunch').innerHTML = recipes[menuLevel].lunch;
 
             document.getElementById('kcalDinner').textContent = `約 ${kDinner} kcal`;
-            document.getElementById('menuDinner').textContent = recipes[menuLevel].dinner;
+            document.getElementById('menuDinner').innerHTML = recipes[menuLevel].dinner;
 
             document.getElementById('dietPlanSection').style.display = 'block';
             document.getElementById('dietPlanSection').scrollIntoView({ behavior: 'smooth' });
