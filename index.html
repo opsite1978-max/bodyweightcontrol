@@ -12,6 +12,8 @@
             --card-bg: #ffffff;
             --text-color: #334155;
             --danger-color: #ef4444;
+            --predict-bg: #e0f2fe; /* 預測區塊底色 */
+            --predict-border: #bae6fd;
         }
 
         body {
@@ -168,6 +170,37 @@
             font-weight: 600;
         }
 
+        /* AI 預測區塊 (新增) */
+        .prediction-card {
+            background-color: var(--predict-bg);
+            border: 1px solid var(--predict-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        
+        .predict-item h4 {
+            margin: 0 0 5px 0;
+            font-size: 0.8rem;
+            color: #0369a1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .predict-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #0ea5e9;
+        }
+
+        .predict-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
         /* 食譜卡片 */
         .menu-card {
             background: white;
@@ -201,10 +234,6 @@
             font-size: 0.9rem;
             color: #555;
             line-height: 1.6;
-        }
-
-        .food-emoji {
-            margin-right: 5px;
         }
 
     </style>
@@ -258,7 +287,7 @@
                 <select id="goal">
                     <option value="300">保守 (-300 kcal)</option>
                     <option value="500" selected>標準 (-500 kcal)</option>
-                    <option value="700">積極 (-700 kcal)</option>
+                    <option value="770">積極 (-770 kcal)</option>
                 </select>
             </div>
 
@@ -270,7 +299,19 @@
             <div class="big-number" id="targetDisplay">0 <span class="unit">kcal</span></div>
             <div id="warningMsg" class="warning"></div>
 
-            <div style="margin: 1.5rem 0; border-top: 1px dashed #cbd5e1;"></div>
+            <div class="prediction-card">
+                <div class="predict-item">
+                    <h4>每週預計減重</h4>
+                    <div class="predict-val" id="weeklyLoss">0.0</div>
+                    <div class="predict-sub">kg / 週</div>
+                </div>
+                <div style="width:1px; background:#bae6fd;"></div>
+                <div class="predict-item">
+                    <h4>30天後體重</h4>
+                    <div class="predict-val" id="monthWeight">0.0</div>
+                    <div class="predict-sub">kg (預估)</div>
+                </div>
+            </div>
 
             <div class="result-title" style="font-size: 1rem; margin-bottom: 0;">🥗 晨禾營養師推薦食譜</div>
             
@@ -303,11 +344,15 @@
                     載入中...
                 </div>
             </div>
+            
+            <p style="font-size: 0.8rem; color:#999; text-align:center; margin-top:20px;">
+                * 預測數據基於 7700kcal=1kg 脂肪計算，實際效果因個人體質而異。
+            </p>
         </div>
     </div>
 
     <script>
-        // 食譜資料庫 (簡單範例)
+        // 食譜資料庫
         const recipes = {
             low: {
                 breakfast: "🥣 無糖豆漿(200ml) + 水煮蛋(1顆) + 半個地瓜",
@@ -347,7 +392,14 @@
             const tdee = bmr * activity;
             const target = Math.round(tdee - goal);
 
-            // 4. 安全檢查
+            // 4. AI 減重預測邏輯 (7700kcal = 1kg)
+            // 每週減少公斤數 = (每日赤字 * 7) / 7700
+            const weeklyLossKg = (goal * 7) / 7700;
+            // 預估30天後體重 = 現在體重 - (每日赤字 * 30 / 7700)
+            const monthlyLossKg = (goal * 30) / 7700;
+            const futureWeight = weight - monthlyLossKg;
+
+            // 5. 安全檢查
             const warningEl = document.getElementById('warningMsg');
             if (target < bmr) {
                 warningEl.textContent = "⚠️ 注意：此熱量低於基礎代謝，建議諮詢醫師";
@@ -355,19 +407,24 @@
                 warningEl.textContent = "";
             }
 
-            // 5. 分配三餐熱量 (30% - 40% - 30%)
+            // 6. 分配三餐熱量
             const kBreakfast = Math.round(target * 0.3);
             const kLunch = Math.round(target * 0.4);
             const kDinner = Math.round(target * 0.3);
 
-            // 6. 選擇食譜等級
+            // 7. 選擇食譜等級
             let menuLevel = 'medium';
             if (target < 1400) menuLevel = 'low';
             if (target > 1900) menuLevel = 'high';
 
-            // 7. 更新畫面
+            // 8. 更新畫面
             document.getElementById('targetDisplay').innerHTML = `${target} <span class="unit">kcal</span>`;
             
+            // 更新預測數據
+            document.getElementById('weeklyLoss').innerHTML = `-${weeklyLossKg.toFixed(1)}`; // 顯示如 -0.5
+            document.getElementById('monthWeight').innerHTML = futureWeight.toFixed(1); // 顯示如 68.5
+
+            // 更新食譜
             document.getElementById('kcalBreakfast').textContent = `約 ${kBreakfast} kcal`;
             document.getElementById('menuBreakfast').textContent = recipes[menuLevel].breakfast;
 
@@ -377,10 +434,8 @@
             document.getElementById('kcalDinner').textContent = `約 ${kDinner} kcal`;
             document.getElementById('menuDinner').textContent = recipes[menuLevel].dinner;
 
-            // 顯示結果區塊
+            // 顯示結果
             document.getElementById('resultSection').style.display = 'block';
-            
-            // 自動捲動到結果
             document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
         }
     </script>
